@@ -183,7 +183,7 @@
 
             	var envLoader = new THREE.CubeTextureLoader();
 
-            	envLoader.setPath( '../../textures/cube/SwedishRoyalCastle/' );
+            	envLoader.setPath( './textures/cube/SwedishRoyalCastle/' );
 
             	var textureCube = envLoader.load( [
             	    'px.jpg', 'nx.jpg',
@@ -193,7 +193,7 @@
 				
 					//INFORMATION PANEL
             	
-            	var infoMat = textureLoader.load( "../../textures/artInfo.jpg");
+            	var infoMat = textureLoader.load( "./textures/artInfo.jpg");
             	infoMat.anisotropy = 4;
             	infoMat.repeat.set( 1, 1 );
             	infoMat.encoding = THREE.sRGBEncoding;
@@ -231,7 +231,7 @@
 					metalness: 0
 				} );
 
-				textureLoader.load( "../../textures/cgbookcase/white-stucco-wall-03/White_stucco_wall_03_1K_Base_Color.png", function ( map ) {
+				textureLoader.load( "./textures/cgbookcase/white-stucco-wall-03/White_stucco_wall_03_1K_Base_Color.png", function ( map ) {
 
 					map.wrapS = THREE.RepeatWrapping;
 					map.wrapT = THREE.RepeatWrapping;
@@ -243,7 +243,7 @@
 
                 } );
 
-                textureLoader.load( "../../textures/cgbookcase/white-stucco-wall-03/White_stucco_wall_03_1K_Height.png", function ( map ) {
+                textureLoader.load( "./textures/cgbookcase/white-stucco-wall-03/White_stucco_wall_03_1K_Height.png", function ( map ) {
 
 					map.wrapS = THREE.RepeatWrapping;
 					map.wrapT = THREE.RepeatWrapping;
