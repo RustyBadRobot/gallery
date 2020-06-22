@@ -20,9 +20,6 @@
 			import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
 			import { OrbitControls } from './jsm/controls/OrbitControls.js';
 			import { RectAreaLightUniformsLib } from './jsm/lights/RectAreaLightUniformsLib.js';
-			//import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-			//import { SSAOPass } from './jsm/postprocessing/SSAOPass.js';
-
 
 			var camera, povcamera, scene, renderer,
 				bulbLight, bulbMat, hemiLight, stats;
@@ -35,15 +32,8 @@
 			var mouse = new THREE.Vector2();
 			var selectedObjects = [];
 
-			var upDown = false;
-			var downDown = false;
-			var leftDown = false;
-			var rightDown = false;
-
 			var rectLight;
 			var rectLightHelper;
-
-			var composer, effectFXAA, outlinePass;
 
 			var border, borderGeometry, borderMesh, frame;
 
@@ -67,151 +57,12 @@
 				bulbPower: 400,
 				hemiIrradiance: 3.4
 			};
-
-			class Player {
-
-              constructor( data ){
-                this.controls = {
-            			up: false,
-            			down: false,
-            			left: false,
-            			right: false,
-            		};
-                this._height = 0.5;
-                this.speedWalking = 0.25;
-                this.ratioSize = new THREE.Vector3();
-                this.tmpPosition = new THREE.Vector3();
-                this.prevPositions = [
-            			new THREE.Vector3(),
-            			new THREE.Vector3(),
-            			new THREE.Vector3(),
-            			new THREE.Vector3(),
-            			new THREE.Vector3()
-            		];
-
-                this.body = new THREE.Mesh(
-                  new THREE.BoxBufferGeometry( 0.25 , this._height, 0.25 ),
-                  new THREE.MeshLambertMaterial({ color: 0xff00ff })
-                );
-                this.body.position.set( 0, this._height/2, 0 );
-
-                /*
-
-                this.helper = new THREE.Mesh(
-                    new THREE.BoxBufferGeometry( 0.5, this._height, 0.5  ),
-                    new THREE.MeshBasicMaterial({ color: 0xff00ff })
-                );
-                this.helper.position.set( -0.5, this._height/2, 0 );
-
-                */
-
-                this.body.BBoxHelper = new THREE.BoxHelper( this.body, 0xff0000 );
-            	this.body.BBox = new THREE.Box3().setFromObject( this.body);
-
-                scene.add( this.body, this.body.BBoxHelper );
-
-                this.body.layers.set( 1 );
-                this.body.BBoxHelper.layers.set( 1 );
-
-                this.initControls();
-
-              }
-
-              update( time ){
-                this.updateMovement( time );
-                this.updateRotation( time );
-                this.body.BBox.setFromObject( this.body );
-                this.checkCollision();
-                this.body.BBoxHelper.update();
-                let relativeCameraOffset = new THREE.Vector3(0, 0, 0.25);
-            	let cameraOffset = relativeCameraOffset.applyMatrix4( this.body.matrixWorld );
-            	povcamera.position.x = cameraOffset.x;
-                povcamera.position.y = cameraOffset.y;
-                povcamera.position.z = cameraOffset.z;
-                povcamera.lookAt( this.body.position );
-              }
-
-              checkCollision(){
-                let self = this;
-                let boxesCollision = false;
-                staticCollideMesh.some( function(mesh){
-                  if( self.body.BBox.intersectsBox( mesh.BBox ) ){
-                    boxesCollision = true;
-                    return true;
-                  }
-                });
-                if( boxesCollision ){
-                  this.body.position.copy( this.tmpPosition ); // last position
-                }
-              }
-
-              updateMovement( time ){
-
-                var delta = clock.getDelta(); // seconds
-
-                this.tmpPosition.copy( this.body.position );
-
-                //console.log( mouseIsDown );
-
-                // Forward
-            		if( this.controls.up == true || upDown == true ){
-            			this.body.translateZ( -this.speedWalking * time );
-            		}
-            		// Back
-            		if( this.controls.down == true  || downDown == true ){
-            			this.body.translateZ( this.speedWalking * time );
-            		}
-
-              }
-
-              updateRotation( time ){
-
-            		// Left
-            		if( this.controls.left == true || leftDown == true ){
-            			this.body.rotation.y += window.innerWidth / 1000 * time;
-            		}
-            		// Right
-            		if( this.controls.right == true || rightDown == true ){
-            			this.body.rotation.y -= window.innerWidth / 1000 * time;
-
-            		}
-
-
-              }
-
-              initControls(){
-                let self = this;
-
-            		window.addEventListener( 'keydown', function(evt){
-            			self.keyset( evt , true );
-            			// evt.preventDefault();
-            		}, false );
-                window.addEventListener( 'keyup', function(evt){
-            			self.keyset( evt , false );
-            		}, false );
-              }
-
-              keyset( evt , trueOrFalse ){
-            		if( evt.key === 'w' ){
-            			this.controls.up = trueOrFalse;
-            		}
-            		if( evt.key === 's' ){
-            			this.controls.down = trueOrFalse;
-            		}
-            		if( evt.key === 'a' ){
-            			this.controls.left = trueOrFalse;
-            		}
-            		if( evt.key === 'd' ){
-            			this.controls.right = trueOrFalse;
-            		}
-            	}
-            }
-
+				
 			function init() {
-
-			    var container = document.getElementById( 'container' );
-
-			    renderer = new THREE.WebGLRenderer( { antialias: true } );
+				
+				var container = document.getElementById( 'container' );
+				
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.physicallyCorrectLights = true;
 				renderer.outputEncoding = THREE.sRGBEncoding;
 				renderer.shadowMap.enabled = true;
@@ -224,62 +75,6 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				container.appendChild( renderer.domElement );
-
-				//ACTIONS
-				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-
-				document.querySelector("#nav-forward").addEventListener('touchstart', function() {
-                  upDown = true;
-                  setTimeout(function() {
-                    if(upDown) {
-                      // mouse was held down for > 2 seconds
-                    }
-                  }, 2000);
-                });
-
-				document.querySelector("#nav-forward").addEventListener('touchend', function() {
-				    upDown = false;
-                });
-
-                document.querySelector("#nav-back").addEventListener('touchstart', function() {
-                  downDown = true;
-                  setTimeout(function() {
-                    if(downDown) {
-                      // mouse was held down for > 2 seconds
-                    }
-                  }, 2000);
-                });
-
-				document.querySelector("#nav-back").addEventListener('touchend', function() {
-				    downDown = false;
-                });
-
-                document.querySelector("#nav-left").addEventListener('touchstart', function() {
-                  leftDown = true;
-                  setTimeout(function() {
-                    if(leftDown) {
-                      // mouse was held down for > 2 seconds
-                    }
-                  }, 2000);
-                });
-
-				document.querySelector("#nav-left").addEventListener('touchend', function() {
-				    leftDown = false;
-                });
-
-                document.querySelector("#nav-right").addEventListener('touchstart', function() {
-                  rightDown = true;
-                  setTimeout(function() {
-                    if(rightDown) {
-                      // mouse was held down for > 2 seconds
-                    }
-                  }, 2000);
-                });
-
-				document.querySelector("#nav-right").addEventListener('touchend', function() {
-				    rightDown = false;
-                });
 
 				//SCENE
 
@@ -294,12 +89,6 @@
 				camera.position.z = 4;
 				camera.position.y = 2;
 				camera.lookAt( scene.position );
-
-				//POV CAMERA
-
-				povcamera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 100 );
-				povcamera.position.set(-0.5, 0.5, 0);
-				povcamera.lookAt(scene.position);
 
 				//STATS
 
@@ -316,10 +105,7 @@
 				hemiLight.position.set( 0, 50, 0 );
 				scene.add( hemiLight );
 
-
 				RectAreaLightUniformsLib.init();
-
-
 
 				var rect0TopLight = new THREE.RectAreaLight( 0xffffff, 1, 0.2, 1 );
 				rect0TopLight.position.set( 1.85, 0.5, -8.3266726846887E-17 );
@@ -350,9 +136,6 @@
 				rect0BotLightMesh.add( rect0BotLightMeshBack );
 
 				rect0BotLight.position.set( -1.85, 0.5, -8.3266726846887E-17 );
-
-
-
 
 				var bulbGeometry = new THREE.SphereBufferGeometry( 0.02, 16, 8 );
 				var bulbLight  = new THREE.PointLight( 0xddeeff, 1, 100, 2 );
@@ -407,104 +190,7 @@
             	    'py.jpg', 'ny.jpg',
             	    'pz.jpg', 'nz.jpg'
             	] );
-
-            	//INFORMATION PANEL
-
-            	var infoMat = textureLoader.load( "../../textures/artInfo.jpg");
-            	infoMat.anisotropy = 4;
-            	infoMat.repeat.set( 1, 1 );
-            	infoMat.encoding = THREE.sRGBEncoding;
-
-
-            	var infoMaterial = new THREE.MeshStandardMaterial({
-            	    map : infoMat
-            	});
-
-            	infoMaterial.needsUpdate = true;
-
-            	var infoBasic = new THREE.MeshLambertMaterial( {
-					color: 0xffffff,
-				} );
-
-            	var infoMat = [
-            	    infoBasic,    // Left side
-            	    infoBasic,    // Right side
-            	    infoBasic,    // Top side
-            	    infoBasic,    // Bottom side
-            	    infoMaterial,            // Front side
-            	    infoBasic     // Back side
-            	];
-
-            	//INFOMATION GEOMETRY
-
-            	var infoGeometry = new THREE.BoxBufferGeometry( 0.05, 0.0325, 0.0025 );
-
-            	//HOTSPOT MATERIAL
-
-            	var hotspotMaterial = new THREE.MeshLambertMaterial( {
-					color: 0x000000,
-				} );
-
-            	var hotspotMat = textureLoader.load( "../../textures/hotspot.png");
-            	hotspotMat.anisotropy = 4;
-            	hotspotMat.repeat.set( 1, 1 );
-            	hotspotMat.encoding = THREE.sRGBEncoding;
-
-            	var hotspotMaterial = new THREE.MeshStandardMaterial({
-            	    map : hotspotMat,
-            	});
-            	hotspotMaterial.needsUpdate = true;
-
-				var hotspotBasic = new THREE.MeshBasicMaterial( {
-				    color: 0x000000
-				} );
-
-            	var hotspotMat = [
-            	    hotspotMaterial,
-            	    hotspotBasic,
-            	];
-
-            	//HOTSPOT HOVER MATERIAL
-
-            	var hotspotMaterialHover = new THREE.MeshLambertMaterial( {
-					color: 0x3297fd,
-				} );
-
-            	var hotspotMatHover = textureLoader.load( "../../textures/hotspot-hover.png");
-            	hotspotMatHover.anisotropy = 4;
-            	hotspotMatHover.repeat.set( 1, 1 );
-            	hotspotMatHover.encoding = THREE.sRGBEncoding;
-
-            	var hotspotMaterialHover = new THREE.MeshStandardMaterial({
-            	    map : hotspotMatHover,
-            	});
-            	hotspotMaterialHover.needsUpdate = true;
-
-				var hotspotBasicHover = new THREE.MeshBasicMaterial( {
-				    color: 0x3297fd
-				} );
-
-            	var hotspotMatHover = [
-            	    hotspotMaterialHover,
-            	    hotspotBasicHover,
-            	];
-
-            	//HOTSPOT GEOMETRY
-
-            	var hotspotGeometry = new THREE.CylinderGeometry( 0.05, 0.05, 0.0025, 32, 1, false );
-
-            	var hotspotFaces = hotspotGeometry.faces.length;
-
-				for (var i = 0; i < hotspotFaces; i++) {
-				    if (hotspotGeometry.faces[i].normal.y !== 0) {
-				        // these are caps
-				        hotspotGeometry.faces[i].materialIndex = 0;
-				    } else {
-				        // each segment has 2 faces
-				        hotspotGeometry.faces[i].materialIndex = 1;
-                    }
-                }
-
+				
             	//GALLERY WALLS MATERIAL
 
             	boardMat = new THREE.MeshStandardMaterial( {
@@ -890,63 +576,7 @@
 				scene.add( ceilingMesh );
 
 				//ART PIECES
-
-
-            	//console.log( 3.7 );
-            	//console.log( 1.75 );
-            	//console.log( 0.2 );
-            	//console.log( -1.85 );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-				console.log(  );
-
-
-
+				
 				var artGeometry0  = new THREE.BoxBufferGeometry( 0.25, 0.25, 0.0125 );
 				var artMesh0 = new THREE.Mesh( artGeometry0, art0 );
 
@@ -980,20 +610,6 @@
 
 				//ADD TO GROUP
 				group0.add( borderMesh0 );
-
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot0 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot0.position.set( artMesh0.position.x, -0.25, artMesh0.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group0.add( hotspot0 );
-				hotspotList.unshift( hotspot0.uuid );
-
 
 				//POSITION GROUP
 				group0.rotation.y = -3.14159 / 2;
@@ -1035,20 +651,6 @@
 				//ADD TO GROUP
 				group1.add( borderMesh1 );
 
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot1 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot1.position.set( artMesh1.position.x, -0.25, artMesh1.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group1.add( hotspot1 );
-				hotspotList.unshift( hotspot1.uuid );
-
-
 				//POSITION GROUP
 				group1.rotation.y = 3.14159;
 				group1.position.set( 0.875, 0.25, -0.0625 );
@@ -1088,20 +690,6 @@
 
 				//ADD TO GROUP
 				group2.add( borderMesh2 );
-
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot2 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot2.position.set( artMesh2.position.x, -0.25, artMesh2.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group2.add( hotspot2 );
-				hotspotList.unshift( hotspot2.uuid );
-
 
 				//POSITION GROUP
 				group2.rotation.y = 3.14159 / 2;
@@ -1143,20 +731,6 @@
 				//ADD TO GROUP
 				group3.add( borderMesh3 );
 
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot3 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot3.position.set( artMesh3.position.x, -0.25, artMesh3.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group3.add( hotspot3 );
-				hotspotList.unshift( hotspot3.uuid );
-
-
 				//POSITION GROUP
 				group3.rotation.y = 0;
 				group3.position.set( 0.875, 0.25, -1.85 );
@@ -1196,20 +770,6 @@
 
 				//ADD TO GROUP
 				group4.add( borderMesh4 );
-
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot4 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot4.position.set( artMesh4.position.x, -0.25, artMesh4.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group4.add( hotspot4 );
-				hotspotList.unshift( hotspot4.uuid );
-
 
 				//POSITION GROUP
 				group4.rotation.y = -3.14159 / 2;
@@ -1251,20 +811,6 @@
 				//ADD TO GROUP
 				group5.add( borderMesh5 );
 
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot5 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot5.position.set( artMesh5.position.x, -0.25, artMesh5.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group5.add( hotspot5 );
-				hotspotList.unshift( hotspot5.uuid );
-
-
 				//POSITION GROUP
 				group5.rotation.y = 3.14159;
 				group5.position.set( 0.875, 0.25, 1.85 );
@@ -1305,20 +851,6 @@
 				//ADD TO GROUP
 				group6.add( borderMesh6 );
 
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot6 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot6.position.set( artMesh6.position.x, -0.25, artMesh6.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group6.add( hotspot6 );
-				hotspotList.unshift( hotspot6.uuid );
-
-
 				//POSITION GROUP
 				group6.rotation.y = 3.14159 / 2;
 				group6.position.set( 0.0625, 0.25, 0.975 );
@@ -1358,19 +890,6 @@
 
 				//ADD TO GROUP
 				group7.add( borderMesh7 );
-
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot7 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot7.position.set( artMesh7.position.x, -0.25, artMesh7.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group7.add( hotspot7 );
-				hotspotList.unshift( hotspot7.uuid );
 
 
 				//POSITION GROUP
@@ -1414,19 +933,6 @@
 				group8.add( borderMesh8 );
 
 
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot8 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot8.position.set( artMesh8.position.x, -0.25, artMesh8.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group8.add( hotspot8 );
-				hotspotList.unshift( hotspot8.uuid );
-
-
 				//POSITION GROUP
 				group8.rotation.y = -3.14159 / 2;
 				group8.position.set( -0.0625, 0.25, -0.975 );
@@ -1466,19 +972,6 @@
 
 				//ADD TO GROUP
 				group9.add( borderMesh9 );
-
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot9 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot9.position.set( artMesh9.position.x, -0.25, artMesh9.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group9.add( hotspot9 );
-				hotspotList.unshift( hotspot9.uuid );
 
 
 				//POSITION GROUP
@@ -1522,19 +1015,6 @@
 				group10.add( borderMesh10 );
 
 
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot10 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot10.position.set( artMesh10.position.x, -0.25, artMesh10.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group10.add( hotspot10 );
-				hotspotList.unshift( hotspot10.uuid );
-
-
 				//POSITION GROUP
 				group10.rotation.y = 3.14159 / 2;
 				group10.position.set( -1.75, 0.25, -0.975 );
@@ -1574,19 +1054,6 @@
 
 				//ADD TO GROUP
 				group11.add( borderMesh11 );
-
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot11 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot11.position.set( artMesh11.position.x, -0.25, artMesh11.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group11.add( hotspot11 );
-				hotspotList.unshift( hotspot11.uuid );
 
 
 				//POSITION GROUP
@@ -1630,19 +1097,6 @@
 				group12.add( borderMesh12 );
 
 
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot12 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot12.position.set( artMesh12.position.x, -0.25, artMesh12.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group12.add( hotspot12 );
-				hotspotList.unshift( hotspot12.uuid );
-
-
 				//POSITION GROUP
 				group12.rotation.y = -3.14159 / 2;
 				group12.position.set( -0.0625, 0.25, 0.975 );
@@ -1682,19 +1136,6 @@
 
 				//ADD TO GROUP
 				group13.add( borderMesh13 );
-
-
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot13 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot13.position.set( artMesh13.position.x, -0.25, artMesh13.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group13.add( hotspot13 );
-				hotspotList.unshift( hotspot13.uuid );
 
 
 				//POSITION GROUP
@@ -1738,19 +1179,6 @@
 				group14.add( borderMesh14 );
 
 
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot14 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot14.position.set( artMesh14.position.x, -0.25, artMesh14.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group14.add( hotspot14 );
-				hotspotList.unshift( hotspot14.uuid );
-
-
 				//POSITION GROUP
 				group14.rotation.y = 3.14159 / 2;
 				group14.position.set( -1.75, 0.25, 0.975 );
@@ -1792,19 +1220,6 @@
 				group15.add( borderMesh15 );
 
 
-				//FRAME
-
-
-                //HOTSPOT
-
-				var hotspot15 = new THREE.Mesh( hotspotGeometry, hotspotMat );
-				hotspot15.position.set( artMesh15.position.x, -0.25, artMesh15.position.z + 0.125 );
-
-				//ADD TO GROUP
-				group15.add( hotspot15 );
-				hotspotList.unshift( hotspot15.uuid );
-
-
 				//POSITION GROUP
 				group15.rotation.y = 0;
 				group15.position.set( -0.875, 0.25, 0.0625 );
@@ -1812,11 +1227,6 @@
 
 
 				//GALLERY WALLS
-
-				//console.log( 3.5 );
-            	//console.log( 1.75 );
-            	//console.log( 0.2 );
-            	//console.log( -1.75 );
 
 
 				var boxTopGeometry1by2 = new THREE.BoxBufferGeometry( 1.75, 1, 0.5 );
@@ -2091,57 +1501,11 @@
 
             }
 
-            let makePlayer = function(){
-              player = new Player();
-            }
-
-            let constructCollisionBoxes = function() {
-
-            	staticCollideMesh.forEach( function( mesh ){
-            		// Bounding Box
-            		mesh.BBox = new THREE.Box3().setFromObject( mesh );
-
-            		// helper
-            		mesh.BBoxHelper = new THREE.BoxHelper( mesh , 0xff0000 );
-            		scene.add( mesh.BBoxHelper );
-
-            		mesh.BBoxHelper.layers.set( 1 );
-
-            	});
-            }
-
             function animate( time ) {
-
-                /*
-
-            	// update the picking ray with the camera and mouse position
-	            raycaster.setFromCamera( mouse, povcamera );
-
-	            // calculate objects intersecting the picking ray
-            	var intersects = raycaster.intersectObjects( scene.children, true );
-
-			    for ( var i = 0; i < intersects.length; i++ ) {
-
-                    if ( hotspotList.includes( intersects[ i ].object.uuid  ) ) {
-
-                        //console.log( intersects[ i ].object );
-
-                        //intersects[ i ].object.material[0].color.set( 0x3297fd );
-                        //intersects[ i ].object.material[1].color.set( 0x3297fd );
-
-                    }
-
-                }
-
-                */
-
             	delta = clock.getDelta();
-            	player.update( delta );
 
             	renderer.render( scene, camera );
             	requestAnimationFrame( animate );
-
-            	TWEEN.update();
             }
 
             init();
@@ -2149,89 +1513,13 @@
 
 			function onWindowResize() {
 
-				povcamera.aspect = window.innerWidth / window.innerHeight;
-				povcamera.updateProjectionMatrix();
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
 			}
-
-			function onDocumentMouseMove( event ) {
-
-            	// calculate mouse position in normalized device coordinates
-            	// (-1 to +1) for both components
-
-            	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-            	mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
-            }
-
-			function onDocumentMouseDown( event ) {
-
-			    event.preventDefault();
-
-			    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-			    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
-			    var vector = new THREE.Vector3(mouse.x, mouse.y, 0.5);
-			    vector = vector.unproject(povcamera);
-
-			    var movecaster = new THREE.Raycaster(povcamera.position, vector.sub(povcamera.position).normalize());
-
-			    var intersects = movecaster.intersectObjects( scene.children, true );
-
-			    for ( var i = 0; i < intersects.length; i++ ) {
-
-                    if ( labelList.includes( intersects[ i ].object.name  ) ) {
-
-                        //console.log( '#label-' + intersects[ i ].object.name );
-
-                        jQuery('#label-' + intersects[ i ].object.name ).addClass('active');
-
-                    } else if ( hotspotList.includes( intersects[ i ].object.uuid  ) ) {
-
-                        let a = intersects[ i ].point;
-
-                        let b = intersects[ i ].object.parent;
-
-                        //console.log( a );
-
-                        var position = {
-			                x: player.body.position.x,
-			                y: player.body.position.y,
-			                z: player.body.position.z
-    			        };
-
-                        var target = {
-    			            x: a.x,
-    			            y: player.body.position.y,
-    			            z: a.z
-    			        };
-
-                        var tween = new TWEEN.Tween(position).to(target, 2000);
-
-                        tween.onUpdate(function(){
-                            player.body.position.x = position.x;
-                            player.body.position.y = position.y;
-                            player.body.position.z = position.z;
-                        });
-
-                        tween.start();
-
-                        var yRotationTween = new TWEEN.Tween( {y: player.body.rotation.y} ).to({ y: intersects[ i ].object.parent.rotation.y },700).delay(400).easing(TWEEN.Easing.Quadratic.Out);
-
-                        yRotationTween.onUpdate(function(object) {
-                            player.body.rotation.y = object.y;
-                        });
-
-                        yRotationTween.start();
-
-                    }
-
-                }
-
-            }
-					</script>
+			</script>
 	</div>
 	</body>
 </html>
